@@ -1,7 +1,13 @@
-import pytest
 import os
 import traceback
 import warnings
+
+from util.derive_test_database_url import configure_process_for_tests
+
+# Before any test module imports files.__main__ (engine uses DATABASE_URL).
+configure_process_for_tests()
+
+import pytest
 
 
 class LazyLoadWarning(UserWarning):

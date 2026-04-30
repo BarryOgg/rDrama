@@ -114,11 +114,28 @@ def _operation(name, commands):
     _start()
 
     # prepend our upgrade, since right now we're always using it
-    commands = [[
-        "python3",
-        "-m", "flask",
-        "db", "upgrade"
-    ]] + commands
+    if name == "tests":
+        # Create postgres_test (etc.) before flask connects — otherwise upgrade
+        # fails with FATAL database does not exist.
+        reset_test_db = [
+            "python3",
+            "/service/util/derive_test_database_url.py",
+            "--reset",
+        ]
+        db_upgrade = [
+            "sh",
+            "-c",
+            'export DATABASE_URL="$(python3 /service/util/derive_test_database_url.py)" && '
+            "python3 -m flask db upgrade",
+        ]
+        commands = [reset_test_db, db_upgrade] + commands
+    else:
+        db_upgrade = [
+            "python3",
+            "-m", "flask",
+            "db", "upgrade",
+        ]
+        commands = [db_upgrade] + commands
 
     # run operations in docker container
     print(f"Running {name} . . .")
